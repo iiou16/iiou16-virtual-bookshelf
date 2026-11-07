@@ -52,3 +52,11 @@ node_modules/
 .claude/
 .kiro/
 CLAUDE.md
+
+# Personal book data (keep local only, never publish)
+data/library.json
+data/highlights-index.json
+data/KindleHighlights
+data/HighlightsASCII
+data/kindle.json
+static/
