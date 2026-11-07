@@ -498,7 +498,7 @@ class BookManager {
      * 対象は Kindle インポートで取り込んだ本だけ。手動追加の本は紙の本として扱い、
      * Google Play Books の本は Kindle for Web で読めないため、どちらも対象外とする。
      * 一部の雑誌など Kindle for Web で読めない Kindle 本もあるが、事前に見分けられないため
-     * URL は返す（呼び出し元は商品ページへのリンクも併せて表示する前提）。
+     * URL は返す（そうした本でも、詳細画面から商品ページへ移動できる前提）。
      *
      * @param {Object} book - 書籍オブジェクト。source と bookId を参照する
      * @returns {string|null} Kindle インポートの本なら Kindle for Web の URL、対象外の本なら null
