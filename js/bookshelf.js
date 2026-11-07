@@ -765,6 +765,8 @@ class VirtualBookshelf {
      * @returns {{coverUrl: string, readerUrl: string|null, storeUrl: string, storeLabel: string}}
      *   coverUrl は表紙を押したときの移動先。Kindle の本なら Kindle for Web、それ以外はストアのページ。
      *   readerUrl は Kindle の本以外では null。
+     *   storeUrl はストアの URL を作れない本では '#'、storeLabel はそのとき '詳細'。
+     * @throws {Error} Kindle インポートの本なのに bookId が ASIN の形式でない場合
      */
     getBookLinkTargets(book) {
         const storeUrlInfo = this.bookManager.getBookUrl(book, this.userData.settings.affiliateId);
@@ -785,7 +787,7 @@ class VirtualBookshelf {
      * 商品ページへは詳細画面から移動できる。Kindle 以外の本はストアのページへのリンクを置く。
      *
      * @param {Object} linkTargets - getBookLinkTargets の戻り値
-     * @returns {string}
+     * @returns {string} 別タブで開く <a> 要素 1 つの HTML。readerUrl があれば「読む」、無ければストアへのリンク
      */
     renderPrimaryLinkHtml(linkTargets) {
         if (linkTargets.readerUrl) {

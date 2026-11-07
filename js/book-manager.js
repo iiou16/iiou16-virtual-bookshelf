@@ -1,11 +1,10 @@
+// Amazon は外部サイトへの埋め込み（iframe）を禁じているため、この URL へのリンクは別タブ（target="_blank"）で開くこと
+const KINDLE_READER_BASE_URL = 'https://read.amazon.co.jp/';
+
 /**
  * BookManager - 蔵書の CRUD 管理を担当するクラス
  * kindle.json からのインポート、手動追加、削除機能を提供
  */
-
-// Amazon は外部サイトへの埋め込み（iframe）を禁じているため、この URL は常に別タブで開く
-const KINDLE_READER_BASE_URL = 'https://read.amazon.co.jp/';
-
 class BookManager {
     constructor() {
         this.library = {
