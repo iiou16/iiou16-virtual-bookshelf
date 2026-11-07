@@ -2,6 +2,10 @@
  * BookManager - 蔵書の CRUD 管理を担当するクラス
  * kindle.json からのインポート、手動追加、削除機能を提供
  */
+
+// Amazon は外部サイトへの埋め込み（iframe）を禁じているため、この URL は常に別タブで開く
+const KINDLE_READER_BASE_URL = 'https://read.amazon.co.jp/';
+
 class BookManager {
     constructor() {
         this.library = {
@@ -486,6 +490,33 @@ class BookManager {
         // Amazon/Kindle（デフォルト）
         const url = this.getAmazonUrl(book, affiliateId);
         return url ? { url, label: 'Amazon', icon: '📚' } : null;
+    }
+
+    /**
+     * Kindle for Web でその本を開く URL を返す。
+     *
+     * 対象は Kindle インポートで取り込んだ本だけ。手動追加の本は紙の本として扱い、
+     * Google Play Books の本は Kindle for Web で読めないため、どちらも対象外とする。
+     * 一部の雑誌など Kindle for Web で読めない Kindle 本もあるが、事前に見分けられないため
+     * URL は返す（呼び出し元は商品ページへのリンクも併せて表示する前提）。
+     *
+     * @param {Object} book - 書籍オブジェクト。source と bookId を参照する
+     * @returns {string|null} Kindle インポートの本なら Kindle for Web の URL、対象外の本なら null
+     * @throws {Error} Kindle インポートの本なのに bookId が ASIN の形式でない場合
+     */
+    findKindleReaderUrlOrNull(book) {
+        if (book.source !== 'kindle_import') {
+            return null;
+        }
+
+        // Kindle ライブラリは購入時の ASIN で本を管理しているため、変更後の ASIN（updatedBookId）は使わない
+        if (!this.isValidASIN(book.bookId)) {
+            throw new Error(`Kindle インポートの本の bookId が ASIN の形式ではありません: bookId=${book.bookId}, title=${book.title}`);
+        }
+
+        const readerUrl = new URL(KINDLE_READER_BASE_URL);
+        readerUrl.searchParams.set('asin', book.bookId);
+        return readerUrl.toString();
     }
 
     /**
