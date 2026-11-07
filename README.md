@@ -154,28 +154,51 @@ virtual-bookshelf/
 │   └── HighlightsASCII/   # ASCIIファイル名のハイライト（Web表示用・Git管理外・再生成可）
 ├── scripts/
 │   ├── generate-highlights-index.sh # ハイライトインデックス生成スクリプト
-│   └── link-data-dir.sh   # 個人データを外部フォルダに置くためのリンク作成スクリプト
+│   ├── serve.sh           # .env の設定でローカルサーバーを起動
+│   ├── link-data-dir.sh   # 個人データを外部フォルダに置くためのリンク作成スクリプト
+│   └── _env.sh            # .env 読み込みの共通処理
 ├── sample/
 │   └── sample_books.json  # サンプル蔵書データ（参考用）
+├── .env.example           # ローカル設定の見本（コピーして .env を作る）
 └── .gitignore             # Git除外設定
 ```
 
 ## 🛠️ ローカル開発
 
 ```bash
+# 初回のみ: ローカル設定ファイルを作成して編集（.env は Git 管理外）
+cp .env.example .env
+
 # HTTPサーバーを起動（CORS制約回避のため）
-# --bind 127.0.0.1 を付けると、同じネットワークの他の端末からは見えなくなります
+./scripts/serve.sh
+```
+
+ブラウザで `http://localhost:8000` を開く（ポートは `.env` の `PORT` で変更可）
+
+`scripts/serve.sh`は`.env`を読み、次のことを行います。
+
+| `.env` の項目 | 既定値 | 内容 |
+| --- | --- | --- |
+| `BOOKSHELF_DATA_DIR` | なし | 個人データの保存先。設定すると起動前に`data/`のリンクをこの保存先に合わせる（後述「同期フォルダにバックアップする」） |
+| `PORT` | `8000` | 待ち受けるポート |
+| `BIND` | `127.0.0.1` | 待ち受けアドレス。`127.0.0.1`ならこのPCからのみ接続できる |
+
+各項目は環境変数でも指定でき、環境変数が`.env`より優先されます（例: `PORT=9000 ./scripts/serve.sh`）。
+
+`scripts/serve.sh`を使わずに起動する場合:
+
+```bash
 python -m http.server 8000 --bind 127.0.0.1
 # または（データをシンボリックリンクで置く場合は --symlinks が必要）
 npx serve . --symlinks
 # または
 php -S localhost:8000
+```
 
+```bash
 # ハイライトインデックス生成（ハイライト機能を使用する場合）
 ./scripts/generate-highlights-index.sh
 ```
-
-ブラウザで `http://localhost:8000` を開く
 
 ## 💾 データフォーマット
 
@@ -327,14 +350,20 @@ git push origin main
 
 #### 同期フォルダ（Google Drive / Dropbox / OneDrive など）にバックアップする
 
-`scripts/link-data-dir.sh`で、個人データの実体を任意のフォルダに置き、`data/`からシンボリックリンクで参照できます。同期フォルダを指定すれば、保存した時点でバックアップされます。フォルダのパスはリポジトリには書き込まれません。
+個人データの実体を任意のフォルダに置き、`data/`からシンボリックリンクで参照できます。同期フォルダを指定すれば、保存した時点でバックアップされます。保存先は`.env`に書くため、リポジトリには含まれません。
 
-```bash
-# 引数でフォルダを指定（例: WSL から Windows の Google Drive フォルダを指定）
-./scripts/link-data-dir.sh "/mnt/c/Users/<ユーザー名>/My Drive/virtual-bookshelf"
-# または環境変数で指定
-BOOKSHELF_DATA_DIR=~/Dropbox/virtual-bookshelf ./scripts/link-data-dir.sh
-```
+1. `.env`の`BOOKSHELF_DATA_DIR`に保存先を書く（空白を含むパスもそのまま書けます）
+
+   ```bash
+   # 例: WSL から Windows の Google Drive フォルダを指定
+   BOOKSHELF_DATA_DIR=/mnt/c/Users/<ユーザー名>/My Drive/virtual-bookshelf
+   ```
+
+2. `./scripts/serve.sh`で起動する（起動のたびに`data/`のリンクが`.env`の保存先に合わせられます）
+
+保存先を変えるときは、`.env`を書き換えて`./scripts/serve.sh`を起動し直します（元の保存先のファイルは移動されないため、必要なら手動でコピーしてください）。
+
+リンクだけを作り直したい場合は`./scripts/link-data-dir.sh`を実行します。保存先は「引数 → 環境変数`BOOKSHELF_DATA_DIR` → `.env`」の順で決まります。
 
 - 対象は`data/library.json`と`data/KindleHighlights/`です（`HighlightsASCII/`と`highlights-index.json`は`generate-highlights-index.sh`で再生成できるため対象外）
 - `data/`に実ファイルがあり、指定先に同名のものがなければ指定先へ移動します。両方にある場合は上書きせずに中断します

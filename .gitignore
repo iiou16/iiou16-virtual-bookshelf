@@ -60,3 +60,6 @@ data/KindleHighlights
 data/HighlightsASCII
 data/kindle.json
 static/
+
+# Local environment settings
+.env

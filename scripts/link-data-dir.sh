@@ -3,8 +3,10 @@
 # Google Drive / Dropbox / OneDrive などの同期フォルダを指定すれば、そのままバックアップになる。
 #
 # 使い方:
+#   scripts/link-data-dir.sh                      # .env の BOOKSHELF_DATA_DIR を使う
 #   scripts/link-data-dir.sh <データフォルダ>
 #   BOOKSHELF_DATA_DIR=<データフォルダ> scripts/link-data-dir.sh
+# 保存先の優先順位: 引数 → 環境変数 BOOKSHELF_DATA_DIR → .env の BOOKSHELF_DATA_DIR
 #
 # 対象:
 #   data/library.json       蔵書・評価・メモ（データエクスポートしたファイル）
@@ -13,13 +15,17 @@
 
 set -euo pipefail
 
+cd "$(dirname "$0")/.."
+source scripts/_env.sh
+load_env .env
+
 DATA_DIR="${1:-${BOOKSHELF_DATA_DIR:-}}"
 if [ -z "$DATA_DIR" ]; then
-    echo "使い方: $0 <データフォルダ>   (または BOOKSHELF_DATA_DIR を設定)" >&2
+    echo "保存先が指定されていません。.env に BOOKSHELF_DATA_DIR を書くか、引数でフォルダを指定してください。" >&2
+    echo "  例: cp .env.example .env  を実行して BOOKSHELF_DATA_DIR を編集" >&2
     exit 1
 fi
 
-cd "$(dirname "$0")/.."
 mkdir -p "$DATA_DIR"
 DATA_DIR="$(cd "$DATA_DIR" && pwd)"
 
