@@ -759,6 +759,43 @@ class VirtualBookshelf {
         });
     }
 
+    /**
+     * 本の表紙とリンク欄で使うリンク先を返す。
+     * @param {Object} book - 書籍オブジェクト
+     * @returns {{coverUrl: string, readerUrl: string|null, storeUrl: string, storeLabel: string}}
+     *   coverUrl は表紙を押したときの移動先。Kindle の本なら Kindle for Web、それ以外はストアのページ。
+     *   readerUrl は Kindle の本以外では null。
+     *   storeUrl はストアの URL を作れない本では '#'、storeLabel はそのとき '詳細'。
+     * @throws {Error} Kindle インポートの本なのに bookId が ASIN の形式でない場合
+     */
+    getBookLinkTargets(book) {
+        const storeUrlInfo = this.bookManager.getBookUrl(book, this.userData.settings.affiliateId);
+        const storeUrl = storeUrlInfo?.url || '#';
+        const readerUrl = this.bookManager.findKindleReaderUrlOrNull(book);
+        return {
+            coverUrl: readerUrl ?? storeUrl,
+            readerUrl,
+            storeUrl,
+            storeLabel: storeUrlInfo?.label || '詳細'
+        };
+    }
+
+    /**
+     * リンク欄の先頭に置くボタンの HTML を返す。
+     *
+     * 本棚の Kindle の本はすべて購入済みなので、カードには「読む」ボタンだけを置く。
+     * 商品ページへは詳細画面から移動できる。Kindle 以外の本はストアのページへのリンクを置く。
+     *
+     * @param {Object} linkTargets - getBookLinkTargets の戻り値
+     * @returns {string} 別タブで開く <a> 要素 1 つの HTML。readerUrl があれば「読む」、無ければストアへのリンク
+     */
+    renderPrimaryLinkHtml(linkTargets) {
+        if (linkTargets.readerUrl) {
+            return `<a href="${linkTargets.readerUrl}" target="_blank" rel="noopener noreferrer" class="book-link reader-link">📖 読む</a>`;
+        }
+        return `<a href="${linkTargets.storeUrl}" target="_blank" rel="noopener noreferrer" class="book-link store-link">${linkTargets.storeLabel}</a>`;
+    }
+
     createBookElement(book, displayType) {
         const bookElement = document.createElement('div');
         bookElement.className = 'book-item';
@@ -769,15 +806,13 @@ class VirtualBookshelf {
         bookElement.setAttribute('data-book-id-attr', book.bookId);
         
         const userNote = this.userData.notes[book.bookId];
-        const bookUrlInfo = this.bookManager.getBookUrl(book, this.userData.settings.affiliateId);
-        const bookUrl = bookUrlInfo?.url || '#';
-        const bookLinkLabel = bookUrlInfo?.label || '詳細';
+        const linkTargets = this.getBookLinkTargets(book);
 
         if (displayType === 'cover' || displayType === 'covers') {
             bookElement.innerHTML = `
                 <div class="book-cover-container">
                     <div class="drag-handle">⋮⋮</div>
-                    <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
+                    <a href="${linkTargets.coverUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
                         ${book.productImage ?
                             `<img class="book-cover lazy" data-src="${this.escapeHtml(this.bookManager.getProductImageUrl(book))}" alt="${this.escapeHtml(book.title)}">` :
                             `<div class="book-cover-placeholder">${this.escapeHtml(book.title)}</div>`
@@ -788,7 +823,7 @@ class VirtualBookshelf {
                     <div class="book-title">${this.escapeHtml(book.title)}</div>
                     <div class="book-author">${this.escapeHtml(book.authors)}</div>
                     <div class="book-links">
-                        <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-link store-link">${bookLinkLabel}</a>
+                        ${this.renderPrimaryLinkHtml(linkTargets)}
                         <a href="#" class="book-link detail-link" data-book-id="${book.bookId}">詳細</a>
                     </div>
                     ${userNote && userNote.memo ? `<div class="book-memo">📝 ${this.formatMemoForDisplay(userNote.memo, 300)}</div>` : ''}
@@ -799,7 +834,7 @@ class VirtualBookshelf {
             bookElement.innerHTML = `
                 <div class="book-cover-container">
                     <div class="drag-handle">⋮⋮</div>
-                    <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
+                    <a href="${linkTargets.coverUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
                         ${book.productImage ?
                             `<img class="book-cover lazy" data-src="${this.escapeHtml(this.bookManager.getProductImageUrl(book))}" alt="${this.escapeHtml(book.title)}">` :
                             '<div class="book-cover-placeholder">📖</div>'
@@ -810,7 +845,7 @@ class VirtualBookshelf {
                     <div class="book-title">${book.title}</div>
                     <div class="book-author">${book.authors}</div>
                     <div class="book-links">
-                        <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-link store-link">${bookLinkLabel}</a>
+                        ${this.renderPrimaryLinkHtml(linkTargets)}
                         <a href="#" class="book-link detail-link" data-book-id="${book.bookId}">詳細</a>
                     </div>
                     ${userNote && userNote.memo ? `<div class="book-memo">📝 ${this.formatMemoForDisplay(userNote.memo, 400)}</div>` : ''}
@@ -866,15 +901,13 @@ class VirtualBookshelf {
         const representativeBook = series.representativeBook;
         const totalVolumes = series.filteredVolumes ? series.filteredVolumes.length : series.totalVolumes;
         const progress = this.seriesManager.getSeriesProgress(series);
-        const bookUrlInfo = this.bookManager.getBookUrl(representativeBook, this.userData.settings.affiliateId);
-        const bookUrl = bookUrlInfo?.url || '#';
-        const bookLinkLabel = bookUrlInfo?.label || '詳細';
+        const linkTargets = this.getBookLinkTargets(representativeBook);
 
         if (displayType === 'cover' || displayType === 'covers') {
             seriesElement.innerHTML = `
                 <div class="book-cover-container series-cover-container">
                     <div class="series-badge">全${totalVolumes}巻</div>
-                    <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
+                    <a href="${linkTargets.coverUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
                         ${representativeBook.productImage ?
                             `<img class="book-cover lazy" data-src="${this.escapeHtml(this.bookManager.getProductImageUrl(representativeBook))}" alt="${this.escapeHtml(series.seriesName)}">` :
                             `<div class="book-cover-placeholder">${this.escapeHtml(series.seriesName)}</div>`
@@ -885,7 +918,7 @@ class VirtualBookshelf {
                     <div class="book-title">${this.escapeHtml(series.seriesName)}</div>
                     <div class="book-author">${this.escapeHtml(series.authors)}</div>
                     <div class="book-links">
-                        <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-link store-link">${bookLinkLabel}</a>
+                        ${this.renderPrimaryLinkHtml(linkTargets)}
                         <a href="#" class="book-link series-detail-link" data-series-id="${series.seriesId}">シリーズ詳細</a>
                     </div>
                 </div>
@@ -895,7 +928,7 @@ class VirtualBookshelf {
             seriesElement.innerHTML = `
                 <div class="book-cover-container series-cover-container">
                     <div class="series-badge">全${totalVolumes}巻</div>
-                    <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
+                    <a href="${linkTargets.coverUrl}" target="_blank" rel="noopener noreferrer" class="book-cover-link">
                         ${representativeBook.productImage ?
                             `<img class="book-cover lazy" data-src="${this.escapeHtml(this.bookManager.getProductImageUrl(representativeBook))}" alt="${this.escapeHtml(series.seriesName)}">` :
                             '<div class="book-cover-placeholder">📚</div>'
@@ -906,7 +939,7 @@ class VirtualBookshelf {
                     <div class="book-title">${this.escapeHtml(series.seriesName)}</div>
                     <div class="book-author">${this.escapeHtml(series.authors)}</div>
                     <div class="book-links">
-                        <a href="${bookUrl}" target="_blank" rel="noopener noreferrer" class="book-link store-link">${bookLinkLabel}</a>
+                        ${this.renderPrimaryLinkHtml(linkTargets)}
                         <a href="#" class="book-link series-detail-link" data-series-id="${series.seriesId}">シリーズ詳細</a>
                     </div>
                 </div>
@@ -1045,6 +1078,7 @@ class VirtualBookshelf {
         const bookUrl = bookUrlInfo?.url || '#';
         const bookLinkLabel = bookUrlInfo?.label || 'ストア';
         const bookLinkIcon = bookUrlInfo?.icon || '📖';
+        const readerUrl = this.bookManager.findKindleReaderUrlOrNull(book);
 
         modalBody.innerHTML = `
             <div class="book-detail">
@@ -1095,6 +1129,7 @@ class VirtualBookshelf {
 
 
                         <div class="book-actions">
+                            ${readerUrl ? `<a class="store-link reader-link" href="${readerUrl}" target="_blank" rel="noopener">📖 Kindleで読む</a>` : ''}
                             <a class="store-link" href="${bookUrl}" target="_blank" rel="noopener">
                                 ${bookLinkIcon} ${bookLinkLabel}で見る
                             </a>
