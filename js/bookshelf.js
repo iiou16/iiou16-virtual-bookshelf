@@ -154,11 +154,8 @@ class VirtualBookshelf {
         // Initialize Static Bookshelf Generator after userData is fully loaded
         this.staticGenerator = new StaticBookshelfGenerator(this.bookManager, this.userData);
 
-        // Initialize SeriesManager and detect series
         this.seriesManager = new SeriesManager();
-        const { seriesGroups, bookToSeriesMap } = this.seriesManager.detectAndGroupSeries(this.books);
-        this.seriesGroups = seriesGroups;
-        this.bookToSeriesMap = bookToSeriesMap;
+        this.reloadBooksAndSeries();
 
         // Load series grouping setting
         this.enableSeriesGrouping = this.userData.settings.enableSeriesGrouping || false;
@@ -177,6 +174,21 @@ class VirtualBookshelf {
         }
 
         this.applyFilters();
+    }
+
+    /**
+     * BookManager が持つ最新の蔵書を読み込み、シリーズの判定をやり直す。
+     *
+     * 本を取り込み・追加・削除・編集・全消去したあとに呼ぶ。
+     * SeriesManager は判定結果をキャッシュするため、キャッシュを消してから判定し直す。
+     * 前提: bookManager と seriesManager が初期化済みであること。
+     */
+    reloadBooksAndSeries() {
+        this.books = this.bookManager.getAllBooks();
+        this.seriesManager.clearCache();
+        const { seriesGroups, bookToSeriesMap } = this.seriesManager.detectAndGroupSeries(this.books);
+        this.seriesGroups = seriesGroups;
+        this.bookToSeriesMap = bookToSeriesMap;
     }
 
     setupEventListeners() {
@@ -2096,7 +2108,7 @@ class VirtualBookshelf {
             this.saveUserData();
             
             // 表示を更新
-            this.books = this.bookManager.getAllBooks();
+            this.reloadBooksAndSeries();
             this.applyFilters();
             this.updateStats();
             this.renderBookshelfOverview();
@@ -2245,7 +2257,7 @@ class VirtualBookshelf {
             this.showImportResults(results);
             
             // 表示を更新
-            this.books = this.bookManager.getAllBooks();
+            this.reloadBooksAndSeries();
             this.applyFilters();
             this.updateStats();
             
@@ -2344,7 +2356,7 @@ class VirtualBookshelf {
                 }
 
                 // 表示を更新
-                this.books = this.bookManager.getAllBooks();
+                this.reloadBooksAndSeries();
                 this.applyFilters();
                 this.updateStats();
 
@@ -2718,7 +2730,7 @@ class VirtualBookshelf {
             this.showAddBookSuccess(newBook);
             
             // 表示を更新
-            this.books = this.bookManager.getAllBooks();
+            this.reloadBooksAndSeries();
             this.applyFilters();
             this.updateStats();
             
@@ -2871,7 +2883,7 @@ class VirtualBookshelf {
             this.showAddBookSuccess(bookData);
 
             // 表示を更新
-            this.books = this.bookManager.getAllBooks();
+            this.reloadBooksAndSeries();
             this.applyFilters();
             this.updateStats();
 
@@ -3132,15 +3144,7 @@ class VirtualBookshelf {
             // userData の localStorage を更新
             this.saveUserData();
 
-            // 表示を更新
-            this.books = this.bookManager.getAllBooks();
-
-            // シリーズ情報を再構築
-            if (this.seriesManager) {
-                const { seriesGroups, bookToSeriesMap } = this.seriesManager.detectAndGroupSeries(this.books);
-                this.seriesGroups = seriesGroups;
-                this.bookToSeriesMap = bookToSeriesMap;
-            }
+            this.reloadBooksAndSeries();
 
             // UI を更新
             this.updateBookshelfSelector();
@@ -3200,8 +3204,7 @@ class VirtualBookshelf {
                 };
             }
             
-            // 本のリストを更新
-            this.books = [];
+            this.reloadBooksAndSeries();
             this.filteredBooks = [];
             
             // UIを更新
