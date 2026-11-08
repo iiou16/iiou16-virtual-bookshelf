@@ -3535,9 +3535,7 @@ class VirtualBookshelf {
                 this.currentShareBookshelf.staticPageInfo = {
                     filename: result.filename,
                     lastGenerated: new Date().toISOString(),
-
-                    // GitHub Pages URLを生成（リポジトリ名から推測）
-                    url: `https://karaage0703.github.io/karaage-virtual-bookshelf/static/${result.filename}`
+                    url: result.url
                 };
                 this.saveUserData();
 

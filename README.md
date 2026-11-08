@@ -146,7 +146,7 @@ virtual-bookshelf/
 ├── templates/
 │   └── bookshelf-template.html # 静的ページテンプレート
 ├── static/                 # 静的ページファイル（手動配置・Git管理外）
-│   └── bookshelf-*.html   # 生成された静的本棚ページ
+│   └── bookshelf_*.html   # 生成された静的本棚ページ
 ├── data/
 │   ├── library.json    # メイン蔵書データ（Git管理外）
 │   ├── config.json     # ユーザー設定
@@ -301,7 +301,7 @@ php -S localhost:8000
 
 1. **公開設定**: 本棚編集時に「📤 この本棚を公開する」をチェック
 2. **静的ページ生成**: 本棚管理で「📤 共有ページ」ボタンをクリック
-3. **HTMLファイルダウンロード**: `bookshelf-{ID}.html`ファイルが自動ダウンロード
+3. **HTMLファイルダウンロード**: `{本棚ID}.html`（例: `bookshelf_1756899555435.html`）が自動ダウンロード
 4. **ファイル配置**: ダウンロードしたファイルを`static/`フォルダに配置
 5. **SNS共有**: Twitter/Facebook/LINEで直接共有、またはURLコピー
 6. **アクセス方法**:
@@ -312,13 +312,13 @@ php -S localhost:8000
 
 ```bash
 # 1. ダウンロードされたHTMLファイルを確認
-ls ~/Downloads/bookshelf-*.html
+ls ~/Downloads/bookshelf_*.html
 
 # 2. staticフォルダを作成（まだない場合）
 mkdir -p static
 
 # 3. HTMLファイルを配置
-cp ~/Downloads/bookshelf-*.html static/
+cp ~/Downloads/bookshelf_*.html static/
 
 # 4. Gitにコミット・プッシュ
 #    static/ は既定で .gitignore に入っているため、公開する場合は .gitignore から static/ の行を外す
@@ -327,7 +327,9 @@ git commit -m "Add static bookshelf pages"
 git push origin main
 ```
 
-**注意**: GitHubページにファイルをプッシュ後、URLが有効になります（例: `https://yourusername.github.io/your-repo/static/bookshelf-12345.html`）
+**注意**: GitHubページにファイルをプッシュ後、URLが有効になります（例: `https://yourusername.github.io/your-repo/static/bookshelf_1756899555435.html`）
+
+生成時に表示される公開URLは、いま本棚を開いているURLをもとに作られます。ローカルで生成した場合は`http://localhost:8000/static/...`になるため、共有するときは`http://localhost:8000/`の部分をGitHub PagesのURLに置き換えてください。
 
 ### 星評価システム
 
