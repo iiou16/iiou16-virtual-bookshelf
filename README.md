@@ -122,11 +122,15 @@
 
 #### ハイライト機能（オプション）
 
-1. [Obsidian Kindle Plugin](https://github.com/hadynz/obsidian-kindle-plugin)をObsidianにインストール
-2. プラグインを使ってKindleハイライトをMarkdown形式でエクスポート
-3. エクスポートしたファイルを`data/KindleHighlights/`フォルダに配置
-4. ターミナルで`scripts/generate-highlights-index.sh`を実行してインデックス作成
-5. YAMLフロントマターにASIN情報が含まれていることを確認
+[Obsidian Kindle Plugin](https://github.com/hadynz/obsidian-kindle-plugin)の出力先を個人データの保存先（`.env`の`BOOKSHELF_DATA_DIR`）の`KindleHighlights`フォルダにすると、同期したハイライトがそのまま本棚に表示されます。
+
+1. Obsidianで、`BOOKSHELF_DATA_DIR`のフォルダを保管庫（vault）として開く（例: WSLで`/mnt/c/Users/<ユーザー名>/My Drive/virtual-bookshelf`を指定しているなら、Windows側の`C:\Users\<ユーザー名>\My Drive\virtual-bookshelf`を開く）
+2. Obsidian Kindle Pluginをインストールし、設定の「Highlights folder」に`KindleHighlights`を選ぶ（フォルダがなければ`./scripts/serve.sh`を一度起動すると作られます）
+3. プラグインで、同期方法に「Amazon Cloud」を選んでKindleのハイライトを同期する。「Upload "My Clippings" file」で取り込んだハイライトにはASINが付かないため、本棚には表示されません
+4. `./scripts/serve.sh`を起動し直す（起動のたびに`scripts/generate-highlights-index.sh`が実行され、ハイライトのインデックスが作り直されます）
+
+- 本との対応付けにはハイライトファイル内のASIN（フロントマターの`asin:`、または本文の`ASIN: B0XXXXXXXX`の行）を使います。ASINが見つからないファイルは起動時に`⚠️ ASINが見つかりません`と表示され、本棚には表示されません
+- `BOOKSHELF_DATA_DIR`を使わない場合は、プラグインの出力ファイルを`data/KindleHighlights/`に置いてください
 
 ## 📁 プロジェクト構造
 
@@ -194,8 +198,9 @@ npx serve . --symlinks
 php -S localhost:8000
 ```
 
+起動のたびにハイライトのインデックス（`data/highlights-index.json`と`data/HighlightsASCII/`）も作り直します。`scripts/serve.sh`を使わずに起動する場合は、先に次を実行してください。
+
 ```bash
-# ハイライトインデックス生成（ハイライト機能を使用する場合）
 ./scripts/generate-highlights-index.sh
 ```
 
