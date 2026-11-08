@@ -205,70 +205,80 @@ php -S localhost:8000
 
 ### 蔵書データ (data/library.json)
 
-書籍の識別子として汎用的な`bookId`を使用しています。Amazon/Kindleの場合はASIN、Google Booksの場合はボリュームIDがbookIdになります。
+「💾 データエクスポート」で書き出されるファイルの形式です。`books`のキーが書籍の識別子（bookId）で、Amazon/Kindleの場合はASIN、Google Booksの場合はボリュームIDです。
 
 ```json
 {
-  "formatVersion": 2,
   "exportDate": "2025-11-16T16:03:19.724Z",
   "books": {
     "B0XXXXXXXXX": {
-      "bookId": "B0XXXXXXXXX",
       "title": "Kindle書籍タイトル",
       "authors": "著者名",
       "acquiredTime": 1756899555435,
-      "readStatus": "READ|UNKNOWN",
+      "readStatus": "READ",
       "productImage": "https://m.media-amazon.com/images/I/...",
       "source": "kindle_import",
-      "addedDate": 1756899555435
+      "addedDate": 1756899555435,
+      "memo": "素晴らしい本でした！詳細は[こちら](https://example.com)をご覧ください",
+      "rating": 5
     },
     "-DFzEAAAQBAJ": {
-      "bookId": "-DFzEAAAQBAJ",
       "title": "Google Books書籍タイトル",
       "authors": "著者名",
       "acquiredTime": 1756899555435,
       "readStatus": "UNKNOWN",
       "productImage": "https://books.google.com/...",
       "source": "google_books",
-      "addedDate": 1756899555435
+      "addedDate": 1756899555435,
+      "memo": "",
+      "rating": 0
     }
-  },
-  "metadata": {
-    "totalBooks": 100,
-    "manuallyAdded": 5,
-    "importedFromKindle": 95,
-    "lastImportDate": 1756899555435
   },
   "bookshelves": [
     {
-      "id": "tech-books",
-      "name": "💻 技術書",
+      "id": "bookshelf_1756899555435",
+      "name": "技術書",
+      "emoji": "💻",
       "description": "プログラミング・技術関連の本",
-      "books": ["B0XXXXXXXXX", "-DFzEAAAQBAJ"],
       "isPublic": true,
-      "color": "#3498db"
+      "books": ["B0XXXXXXXXX", "-DFzEAAAQBAJ"],
+      "createdAt": "2025-11-16T16:03:19.724Z"
     }
   ],
-  "notes": {
-    "B0XXXXXXXXX": {
-      "memo": "素晴らしい本でした！詳細は[こちら](https://example.com)をご覧ください",
-      "rating": 5
-    }
-  },
   "settings": {
-    "defaultView": "hybrid",
-    "affiliateId": "your-affiliate-id",
+    "defaultView": "covers",
     "showHighlights": true,
     "currentBookshelf": "all",
     "theme": "light",
-    "booksPerPage": 50
+    "booksPerPage": 100,
+    "showImagesInOverview": true,
+    "enableSeriesGrouping": true,
+    "coverSize": "medium",
+    "sortOrder": "custom",
+    "sortDirection": "desc"
   },
   "bookOrder": {
     "all": ["B0XXXXXXXXX", "-DFzEAAAQBAJ"],
-    "tech-books": ["B0XXXXXXXXX"]
-  }
+    "bookshelf_1756899555435": ["B0XXXXXXXXX"]
+  },
+  "stats": {
+    "totalBooks": 2,
+    "notesCount": 1
+  },
+  "version": "2.0"
 }
 ```
+
+- `books`の各本
+  - `readStatus`: `"READ"`（読了）または`"UNKNOWN"`（未読・不明）
+  - `memo`: 個人メモ（Markdown可）。未入力なら`""`
+  - `rating`: 星評価`1`〜`5`。未評価なら`0`
+  - `updatedAsin`: 詳細画面の編集で「変更後商品コード」を入れた本だけに付く
+- `bookshelves`の各本棚
+  - `lastUpdated`: 本棚を編集したことがある場合だけ付く
+  - `staticPageInfo`: 共有ページを生成したことがある場合だけ付く（`filename`、`lastGenerated`、`url`）
+- `settings`: 画面で変更した表示設定。`affiliateId`は書き出されない（`data/config.json`で管理する）
+- `stats`: 書き出した時点の冊数（`totalBooks`）とメモ・評価のある本の数（`notesCount`）
 
 ### sourceの値
 
