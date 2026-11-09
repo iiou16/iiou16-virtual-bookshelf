@@ -125,7 +125,7 @@
 [Obsidian Kindle Plugin](https://github.com/hadynz/obsidian-kindle-plugin)の出力先を個人データの保存先（`.env`の`BOOKSHELF_DATA_DIR`）の`KindleHighlights`フォルダにすると、同期したハイライトがそのまま本棚に表示されます。
 
 1. Obsidianで、`BOOKSHELF_DATA_DIR`のフォルダを保管庫（vault）として開く（例: WSLで`/mnt/c/Users/<ユーザー名>/My Drive/virtual-bookshelf`を指定しているなら、Windows側の`C:\Users\<ユーザー名>\My Drive\virtual-bookshelf`を開く）
-2. Obsidian Kindle Pluginをインストールし、設定の「Highlights folder」に`KindleHighlights`を選ぶ（フォルダがなければ`./scripts/serve.sh`を一度起動すると作られます）
+2. Obsidian Kindle Pluginをインストールし、設定の「Highlights folder」に`KindleHighlights`を選ぶ（フォルダがなければ、`BOOKSHELF_DATA_DIR`を設定した状態で`./scripts/serve.sh`を一度起動すると作られます）
 3. プラグインで、同期方法に「Amazon Cloud」を選んでKindleのハイライトを同期する。「Upload "My Clippings" file」で取り込んだハイライトにはASINが付かないため、本棚には表示されません
 4. `./scripts/serve.sh`を起動し直す（起動のたびに`scripts/generate-highlights-index.sh`が実行され、ハイライトのインデックスが作り直されます）
 
