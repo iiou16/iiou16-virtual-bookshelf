@@ -2,8 +2,6 @@
 
 あなたの個人読書ライブラリを美しく展示するWebアプリケーションテンプレートです。
 
-[Virtual Bookshelf](https://karaage0703.github.io/karaage-virtual-bookshelf/)
-
 ## 🎯 概要
 
 このテンプレートは、iPadのKindleアプリや他の電子書籍リーダーで読書をしている方向けの、個人蔵書管理・展示システムです。読んだ本を見つけやすくし、5星評価システムで本を評価・管理できます。
@@ -19,7 +17,7 @@
 
 - 🔍 **検索・フィルター**: タイトル・著者・星評価での絞り込み
 - 📊 **読書統計**: 総蔵書数の表示
-- 🔗 **Amazon Associates**: 自動アフィリエイトリンク生成
+- 🔗 **Amazon Associates**: アフィリエイトIDを設定すると、Amazonへのリンクにアフィリエイトタグを付ける
 - 🌐 **公開・共有**: 本棚ごとの公開設定と静的ページ生成
 - 💾 **データエクスポート**: 設定・星評価・メモの永続化
 - 📥 **蔵書管理**: Kindleインポート、手動追加、Google Books追加、削除機能
@@ -92,7 +90,7 @@
 
 | 設定項目 | 説明 | 値 |
 | --------- | ------ | ----- |
-| `affiliateId` | Amazon AssociatesのアフィリエイトID | 文字列（例: `"your-id-22"`） |
+| `affiliateId` | Amazon AssociatesのアフィリエイトID | 文字列（例: `"your-id-22"`）。空文字`""`ならアフィリエイトタグを付けない（既定） |
 | `defaultView` | デフォルトの表示モード | `"covers"`: 表紙表示、`"list"`: リスト表示 |
 | `coverSize` | 表紙サイズ | `"small"`: 小、`"medium"`: 中、`"large"`: 大 |
 | `booksPerPage` | 1ページあたりの表示数 | `25`, `50`, `100`, `200`, `"all"` |
@@ -118,17 +116,21 @@
 
 #### 基本設定
 
-- **アフィリエイトID**: `data/config.json`の`affiliateId`を変更
+- **アフィリエイトID**: `data/config.json`の`affiliateId`を変更（使わない場合は`""`のままにする。キーごと消すと、ブラウザに保存済みの以前のIDが使われ続ける）
 - **本棚の作成**: デフォルトの本棚を編集、新しい本棚を追加
 - **カラーテーマ**: CSS変数でカスタマイズ
 
 #### ハイライト機能（オプション）
 
-1. [Obsidian Kindle Plugin](https://github.com/hadynz/obsidian-kindle-plugin)をObsidianにインストール
-2. プラグインを使ってKindleハイライトをMarkdown形式でエクスポート
-3. エクスポートしたファイルを`data/KindleHighlights/`フォルダに配置
-4. ターミナルで`scripts/generate-highlights-index.sh`を実行してインデックス作成
-5. YAMLフロントマターにASIN情報が含まれていることを確認
+[Obsidian Kindle Plugin](https://github.com/hadynz/obsidian-kindle-plugin)の出力先を個人データの保存先（`.env`の`BOOKSHELF_DATA_DIR`）の`KindleHighlights`フォルダにすると、同期したハイライトがそのまま本棚に表示されます。
+
+1. Obsidianで、`BOOKSHELF_DATA_DIR`のフォルダを保管庫（vault）として開く（例: WSLで`/mnt/c/Users/<ユーザー名>/My Drive/virtual-bookshelf`を指定しているなら、Windows側の`C:\Users\<ユーザー名>\My Drive\virtual-bookshelf`を開く）
+2. Obsidian Kindle Pluginをインストールし、設定の「Highlights folder」に`KindleHighlights`を選ぶ（フォルダがなければ、`BOOKSHELF_DATA_DIR`を設定した状態で`./scripts/serve.sh`を一度起動すると作られます）
+3. プラグインで、同期方法に「Amazon Cloud」を選んでKindleのハイライトを同期する。「Upload "My Clippings" file」で取り込んだハイライトにはASINが付かないため、本棚には表示されません
+4. `./scripts/serve.sh`を起動し直す（起動のたびに`scripts/generate-highlights-index.sh`が実行され、ハイライトのインデックスが作り直されます）
+
+- 本との対応付けにはハイライトファイル内のASIN（フロントマターの`asin:`、または本文の`ASIN: B0XXXXXXXX`の行）を使います。ASINが見つからないファイルは起動時に`⚠️ ASINが見つかりません`、英大文字と数字の10桁でないASINのファイルは`⚠️ ASINの形式が正しくないため飛ばします`と表示され、本棚には表示されません
+- `BOOKSHELF_DATA_DIR`を使わない場合は、プラグインの出力ファイルを`data/KindleHighlights/`に置いてください
 
 ## 📁 プロジェクト構造
 
@@ -146,7 +148,7 @@ virtual-bookshelf/
 ├── templates/
 │   └── bookshelf-template.html # 静的ページテンプレート
 ├── static/                 # 静的ページファイル（手動配置・Git管理外）
-│   └── bookshelf-*.html   # 生成された静的本棚ページ
+│   └── bookshelf_*.html   # 生成された静的本棚ページ
 ├── data/
 │   ├── library.json    # メイン蔵書データ（Git管理外）
 │   ├── config.json     # ユーザー設定
@@ -186,6 +188,8 @@ cp .env.example .env
 
 各項目は環境変数でも指定でき、環境変数が`.env`より優先されます（例: `PORT=9000 ./scripts/serve.sh`）。
 
+また、起動前に毎回`scripts/generate-highlights-index.sh`を実行し、ハイライトのインデックス（`data/highlights-index.json`と`data/HighlightsASCII/`）を作り直します。インデックスの作成に失敗した場合はサーバーを起動しません。
+
 `scripts/serve.sh`を使わずに起動する場合:
 
 ```bash
@@ -196,8 +200,9 @@ npx serve . --symlinks
 php -S localhost:8000
 ```
 
+`scripts/serve.sh`を使わない場合はハイライトのインデックスが自動では作られないため、起動前に次を実行してください。
+
 ```bash
-# ハイライトインデックス生成（ハイライト機能を使用する場合）
 ./scripts/generate-highlights-index.sh
 ```
 
@@ -205,70 +210,79 @@ php -S localhost:8000
 
 ### 蔵書データ (data/library.json)
 
-書籍の識別子として汎用的な`bookId`を使用しています。Amazon/Kindleの場合はASIN、Google Booksの場合はボリュームIDがbookIdになります。
+「💾 データエクスポート」で書き出されるファイルの形式です。`books`のキーが書籍の識別子（bookId）で、Amazon/Kindleの場合はASIN、Google Booksの場合はボリュームIDです。
 
 ```json
 {
-  "formatVersion": 2,
   "exportDate": "2025-11-16T16:03:19.724Z",
   "books": {
     "B0XXXXXXXXX": {
-      "bookId": "B0XXXXXXXXX",
       "title": "Kindle書籍タイトル",
       "authors": "著者名",
       "acquiredTime": 1756899555435,
-      "readStatus": "READ|UNKNOWN",
+      "readStatus": "READ",
       "productImage": "https://m.media-amazon.com/images/I/...",
       "source": "kindle_import",
-      "addedDate": 1756899555435
+      "addedDate": 1756899555435,
+      "memo": "素晴らしい本でした！詳細は[こちら](https://example.com)をご覧ください",
+      "rating": 5
     },
     "-DFzEAAAQBAJ": {
-      "bookId": "-DFzEAAAQBAJ",
       "title": "Google Books書籍タイトル",
       "authors": "著者名",
       "acquiredTime": 1756899555435,
       "readStatus": "UNKNOWN",
       "productImage": "https://books.google.com/...",
       "source": "google_books",
-      "addedDate": 1756899555435
+      "addedDate": 1756899555435,
+      "memo": "",
+      "rating": 0
     }
-  },
-  "metadata": {
-    "totalBooks": 100,
-    "manuallyAdded": 5,
-    "importedFromKindle": 95,
-    "lastImportDate": 1756899555435
   },
   "bookshelves": [
     {
-      "id": "tech-books",
-      "name": "💻 技術書",
+      "id": "bookshelf_1756899555435",
+      "name": "技術書",
+      "emoji": "💻",
       "description": "プログラミング・技術関連の本",
-      "books": ["B0XXXXXXXXX", "-DFzEAAAQBAJ"],
       "isPublic": true,
-      "color": "#3498db"
+      "books": ["B0XXXXXXXXX", "-DFzEAAAQBAJ"],
+      "createdAt": "2025-11-16T16:03:19.724Z"
     }
   ],
-  "notes": {
-    "B0XXXXXXXXX": {
-      "memo": "素晴らしい本でした！詳細は[こちら](https://example.com)をご覧ください",
-      "rating": 5
-    }
-  },
   "settings": {
-    "defaultView": "hybrid",
-    "affiliateId": "your-affiliate-id",
+    "defaultView": "covers",
     "showHighlights": true,
     "currentBookshelf": "all",
     "theme": "light",
-    "booksPerPage": 50
+    "booksPerPage": 100,
+    "showImagesInOverview": true,
+    "enableSeriesGrouping": true,
+    "coverSize": "medium",
+    "sortOrder": "custom",
+    "sortDirection": "desc"
   },
   "bookOrder": {
     "all": ["B0XXXXXXXXX", "-DFzEAAAQBAJ"],
-    "tech-books": ["B0XXXXXXXXX"]
-  }
+    "bookshelf_1756899555435": ["B0XXXXXXXXX"]
+  },
+  "stats": {
+    "totalBooks": 2,
+    "notesCount": 1
+  },
+  "version": "2.0"
 }
 ```
+
+- `books`の各本
+  - `readStatus`: `"READ"`（読了）または`"UNKNOWN"`（未読・不明）
+  - `memo`: 個人メモ（Markdown可）。未入力なら`""`
+  - `rating`: 星評価`1`〜`5`。未評価なら`0`
+- `bookshelves`の各本棚
+  - `lastUpdated`: 本棚を編集したことがある場合だけ付く
+  - `staticPageInfo`: 共有ページを生成したことがある場合だけ付く（`filename`、`lastGenerated`、`url`）
+- `settings`: 画面で変更した表示設定。`affiliateId`は書き出されない（`data/config.json`で管理する）
+- `stats`: 書き出した時点の冊数（`totalBooks`）とメモ・評価のある本の数（`notesCount`）
 
 ### sourceの値
 
@@ -301,7 +315,7 @@ php -S localhost:8000
 
 1. **公開設定**: 本棚編集時に「📤 この本棚を公開する」をチェック
 2. **静的ページ生成**: 本棚管理で「📤 共有ページ」ボタンをクリック
-3. **HTMLファイルダウンロード**: `bookshelf-{ID}.html`ファイルが自動ダウンロード
+3. **HTMLファイルダウンロード**: `{本棚ID}.html`（例: `bookshelf_1756899555435.html`）が自動ダウンロード
 4. **ファイル配置**: ダウンロードしたファイルを`static/`フォルダに配置
 5. **SNS共有**: Twitter/Facebook/LINEで直接共有、またはURLコピー
 6. **アクセス方法**:
@@ -312,13 +326,13 @@ php -S localhost:8000
 
 ```bash
 # 1. ダウンロードされたHTMLファイルを確認
-ls ~/Downloads/bookshelf-*.html
+ls ~/Downloads/bookshelf_*.html
 
 # 2. staticフォルダを作成（まだない場合）
 mkdir -p static
 
 # 3. HTMLファイルを配置
-cp ~/Downloads/bookshelf-*.html static/
+cp ~/Downloads/bookshelf_*.html static/
 
 # 4. Gitにコミット・プッシュ
 #    static/ は既定で .gitignore に入っているため、公開する場合は .gitignore から static/ の行を外す
@@ -327,7 +341,9 @@ git commit -m "Add static bookshelf pages"
 git push origin main
 ```
 
-**注意**: GitHubページにファイルをプッシュ後、URLが有効になります（例: `https://yourusername.github.io/your-repo/static/bookshelf-12345.html`）
+**注意**: GitHubページにファイルをプッシュ後、URLが有効になります（例: `https://yourusername.github.io/your-repo/static/bookshelf_1756899555435.html`）
+
+生成時に表示される公開URLは、いま本棚を開いているURLをもとに作られます。ローカルで生成した場合は`http://localhost:8000/static/...`になるため、共有するときは`http://localhost:8000/`の部分をGitHub PagesのURLに置き換えてください。
 
 ### 星評価システム
 
