@@ -129,7 +129,7 @@
 3. プラグインで、同期方法に「Amazon Cloud」を選んでKindleのハイライトを同期する。「Upload "My Clippings" file」で取り込んだハイライトにはASINが付かないため、本棚には表示されません
 4. `./scripts/serve.sh`を起動し直す（起動のたびに`scripts/generate-highlights-index.sh`が実行され、ハイライトのインデックスが作り直されます）
 
-- 本との対応付けにはハイライトファイル内のASIN（フロントマターの`asin:`、または本文の`ASIN: B0XXXXXXXX`の行）を使います。ASINが見つからないファイルは起動時に`⚠️ ASINが見つかりません`と表示され、本棚には表示されません
+- 本との対応付けにはハイライトファイル内のASIN（フロントマターの`asin:`、または本文の`ASIN: B0XXXXXXXX`の行）を使います。ASINが見つからないファイルは起動時に`⚠️ ASINが見つかりません`、英大文字と数字の10桁でないASINのファイルは`⚠️ ASINの形式が正しくないため飛ばします`と表示され、本棚には表示されません
 - `BOOKSHELF_DATA_DIR`を使わない場合は、プラグインの出力ファイルを`data/KindleHighlights/`に置いてください
 
 ## 📁 プロジェクト構造

@@ -26,15 +26,22 @@ for file in data/KindleHighlights/*.md; do
         filename=$(basename "$file")
         
         # YAMLフロントマターからASINを抽出
-        # 一致しない grep は終了コード 1 を返すが、ASIN が無いのは失敗ではない（下で警告する）ため || true で許す
-        asin=$(head -20 "$file" | { grep -E "^asin:" || true; } | sed 's/asin: *//' | tr -d ' ' | tr -d '"' | tr -d "'")
+        # Windows で書かれたファイルは改行が CRLF のため、\r も取り除く（残ると JSON が壊れる）
+        asin=$(head -20 "$file" | sed -n 's/^asin: *//p' | tr -d " \"'\r")
 
         # ASINが見つからない場合はメタデータから抽出を試行
+        # grep は一致しないと 1、読み取りエラーなどでは 2 を返す。一致しないのは ASIN が無いだけなので 1 だけを許す
         # grep | head -1 だと pipefail の下で grep が SIGPIPE で失敗することがあるため、grep -m1 で 1 件に絞る
         if [ -z "$asin" ]; then
-            asin=$({ grep -m1 -E "ASIN: *[A-Z0-9]{10}" "$file" || true; } | sed 's/.*ASIN: *//' | tr -d ' ')
+            asin=$({ grep -m1 -E "ASIN: *[A-Z0-9]{10}" "$file" || [ $? -eq 1 ]; } | sed 's/.*ASIN: *//' | tr -d " \r")
         fi
-        
+
+        # ASIN はファイル名と JSON のキーにそのまま使うため、英大文字と数字の 10 桁以外は使わない
+        if [ -n "$asin" ] && ! [[ "$asin" =~ ^[A-Z0-9]{10}$ ]]; then
+            echo "⚠️ ASINの形式が正しくないため飛ばします（$asin）: $filename"
+            continue
+        fi
+
         if [ -n "$asin" ]; then
             # ASCIIファイル名を作成
             ascii_filename="${asin}.txt"
