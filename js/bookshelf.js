@@ -62,9 +62,6 @@ class VirtualBookshelf {
         this.bookManager = new BookManager();
         await this.bookManager.initialize();
 
-        // Get books from BookManager instead of direct kindle.json
-        this.books = this.bookManager.getAllBooks();
-        
         // Load config data
         let config = {};
         try {
