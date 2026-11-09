@@ -278,7 +278,6 @@ php -S localhost:8000
   - `readStatus`: `"READ"`（読了）または`"UNKNOWN"`（未読・不明）
   - `memo`: 個人メモ（Markdown可）。未入力なら`""`
   - `rating`: 星評価`1`〜`5`。未評価なら`0`
-  - `updatedAsin`: 詳細画面の編集で「変更後商品コード」を入れた本だけに付く
 - `bookshelves`の各本棚
   - `lastUpdated`: 本棚を編集したことがある場合だけ付く
   - `staticPageInfo`: 共有ページを生成したことがある場合だけ付く（`filename`、`lastGenerated`、`url`）
