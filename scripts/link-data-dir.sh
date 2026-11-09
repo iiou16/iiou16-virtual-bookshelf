@@ -63,4 +63,4 @@ for name in "${TARGETS[@]}"; do
     echo "🔗 $local_path → $remote_path"
 done
 
-echo "🎉 完了。ハイライトを使う場合は scripts/generate-highlights-index.sh を実行してください。"
+echo "🎉 完了。scripts/serve.sh で起動するとハイライトのインデックスも作り直されます（serve.sh を使わない場合は scripts/generate-highlights-index.sh を実行してください）。"

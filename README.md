@@ -188,6 +188,8 @@ cp .env.example .env
 
 各項目は環境変数でも指定でき、環境変数が`.env`より優先されます（例: `PORT=9000 ./scripts/serve.sh`）。
 
+また、起動前に毎回`scripts/generate-highlights-index.sh`を実行し、ハイライトのインデックス（`data/highlights-index.json`と`data/HighlightsASCII/`）を作り直します。インデックスの作成に失敗した場合はサーバーを起動しません。
+
 `scripts/serve.sh`を使わずに起動する場合:
 
 ```bash
@@ -198,7 +200,7 @@ npx serve . --symlinks
 php -S localhost:8000
 ```
 
-起動のたびにハイライトのインデックス（`data/highlights-index.json`と`data/HighlightsASCII/`）も作り直します。`scripts/serve.sh`を使わずに起動する場合は、先に次を実行してください。
+`scripts/serve.sh`を使わない場合はハイライトのインデックスが自動では作られないため、起動前に次を実行してください。
 
 ```bash
 ./scripts/generate-highlights-index.sh
