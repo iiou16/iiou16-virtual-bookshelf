@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # ハイライトインデックス生成スクリプト
+# 途中で失敗したら止める。serve.sh から呼ばれたとき、インデックスと
+# HighlightsASCII の中身が食い違ったままサーバーが起動しないようにするため。
+set -euo pipefail
+
 echo "🔄 ハイライトインデックス生成開始..."
 
 cd "$(dirname "$0")/.."
@@ -22,11 +26,13 @@ for file in data/KindleHighlights/*.md; do
         filename=$(basename "$file")
         
         # YAMLフロントマターからASINを抽出
-        asin=$(head -20 "$file" | grep -E "^asin:" | sed 's/asin: *//' | tr -d ' ' | tr -d '"' | tr -d "'")
-        
+        # 一致しない grep は終了コード 1 を返すが、ASIN が無いのは失敗ではない（下で警告する）ため || true で許す
+        asin=$(head -20 "$file" | { grep -E "^asin:" || true; } | sed 's/asin: *//' | tr -d ' ' | tr -d '"' | tr -d "'")
+
         # ASINが見つからない場合はメタデータから抽出を試行
+        # grep | head -1 だと pipefail の下で grep が SIGPIPE で失敗することがあるため、grep -m1 で 1 件に絞る
         if [ -z "$asin" ]; then
-            asin=$(grep -E "ASIN: *[A-Z0-9]{10}" "$file" | head -1 | sed 's/.*ASIN: *//' | tr -d ' ')
+            asin=$({ grep -m1 -E "ASIN: *[A-Z0-9]{10}" "$file" || true; } | sed 's/.*ASIN: *//' | tr -d ' ')
         fi
         
         if [ -n "$asin" ]; then
